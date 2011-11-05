@@ -24,6 +24,8 @@ var TwitterFriends = function(sn){
     this.follows = [];
     this.markers = [];
     this.locations = [];
+    this.calledLocations = 0;
+    this.receivedLocations = 0;
     this.receivedCalls = 0;
     this.totalCalls = 0;
     this.map = map;
@@ -142,8 +144,10 @@ TwitterFriends.prototype.callGeoCoder = function(location, index){
  * 
  */
 TwitterFriends.prototype.callGetJson = function(url, index){
+    this.calledLocations++;
     var that = this;
     $.getJSON(url, function(data){
+        that.receivedLocations++;
         var i = index;
         var result;
         //check if there are results, otherwise we get errors
@@ -169,40 +173,77 @@ TwitterFriends.prototype.handleLocations = function(LatLng, person){
     var uniqueLocation = true,
         markup, 
         marker;
-    
+    var callVsRecv = (this.calledLocations == (this.receivedLocations+1));
     //check if the location isEqual to any of the same in this.locations
     for(var i = 0, l = this.locations.length; i < l; i++){
         //if yes break the loop
-        if(_.isEqual(LatLng, this.locations[i])){
-            uniqueLocation = false;
-            break;    
+        if(_.isEqual(LatLng, this.locations[i].latLng)){
+            this.locations[i].followers.push(person);
+            if(callVsRecv){
+                this.groupByLocation();    
+            }
+            return;    
         }
     }
-    if(!uniqueLocation){
-       return;     
-    }
     
-    if(uniqueLocation && this.locations.length){
-        this.locations.push(LatLng);
-        markup = '<div class="marker"></div>';    
-        marker = new RichMarker({
-            position: LatLng,
-            map: map,
-            content: markup
-        });
-    } else if (!this.locations.length){
-        this.locations.push(LatLng);
-        markup = '<div class="marker"></div>';    
-        marker = new RichMarker({
-            position: LatLng,
-            map: map,
-            content: markup
-        });
+    var locationObject = {
+        latLng : LatLng,
+        followers : [person]
+    };
+    
+    this.locations.push(locationObject);
+    
+    //@TODO Missing one location, figure this out
+    if(callVsRecv){
+        this.groupByLocation();    
     }
-    //<img src="'+img+'"/>
+};
+
+var circlePoints = function(radius, steps, centerX, centerY){
+    var xValues = [];
+    var yValues = [];
+    var points = [];
+    var tmpX;
+    var tmpY;
+    for (var i = 0; i < steps; i++) {
+        xValues[i] = (centerX + radius * Math.cos(2 * Math.PI * i / steps));
+        tmpX = Math.floor(xValues[i]);
+        yValues[i] = (centerY + radius * Math.sin(2 * Math.PI * i / steps));
+        tmpY = Math.floor(yValues[i]);
+        
+        points.push([tmpX, tmpY]);
+    }
+    console.log(points);
+    return points;
 };
 
 TwitterFriends.prototype.groupByLocation = function(){
-    
+    var LatLng, markup, person, points, top, left;
+    console.log('I made it');
+    for(var i = 0, l = this.locations.length; i < l; i++){
+        markup = '<div class="group-marker">';
+        LatLng = this.locations[i].latLng;
+        for(var j = 0, k = this.locations[i].followers.length; j < k; j++){
+            person = this.locations[i].followers[j];
+            if(j === 0 && k == 1){
+                top = 0;
+                left = 0;
+                markup = '<div class="single-marker">';
+            } else {
+                points = circlePoints(120, k, 120, 120);
+                top = points[j][0];
+                left = points[j][1];
+            }
+            markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;height:60px;width:60px;border-radius:60px;overflow:hidden;" class="img-container"><img src="'+person.profile_image_url+'"/></div>';
+        }
+        markup += '</div>';
+        marker = new RichMarker({
+            position: LatLng,
+            map: map,
+            shadow: '',
+            content: markup
+        });
+        console.dir(marker);
+    }
 };
 
