@@ -20,6 +20,31 @@
     height:60px;
     border-radius:60px;
 }
+
+.followers {
+    position:fixed;
+    display:none;
+    font-family:Helvetic Nueue, Arial, sans-serif;
+    bottom:5%;
+    left:2%;
+    padding:10px;
+    border:1px solid #999;
+    border-radius:5px;
+    background:#BADA55;
+}
+
+.followers-received {
+    position:fixed;
+    display:none;
+    font-family:Helvetic Nueue, Arial, sans-serif;
+    bottom:5%;
+    right:2%;
+    padding:10px;
+    border:1px solid #999;
+    border-radius:5px;
+    background:#BADA55;
+}
+
 .group-marker {
     position:relative;
     top:0px;
@@ -40,6 +65,14 @@
     width:300px;
     z-index:1000;
     border-radius:300px;
+}
+
+.group-amount {
+    position:absolute;
+    font-size:24px;
+    font-family:Helvetica Nueue, Arial, sans-serif;
+    left:25%;
+    top:25%;
 }
 
 .img-container {
