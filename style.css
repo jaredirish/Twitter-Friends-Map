@@ -15,3 +15,43 @@
     border:1px solid #999;
     background:#BADA55;
 }
+.single-marker {
+    width:60px;
+    height:60px;
+    border-radius:60px;
+}
+.group-marker {
+    position:relative;
+    top:0px;
+    left:0px;
+    width:60px;
+    height:60px;
+    border-radius:60px;
+    background:#fff;
+    overflow:hidden;
+    -webkit-transition-property: height, width, top, left;
+    -webkit-transition-duration: 0.3s;
+}
+
+.group-marker:hover {
+    top:-150px;
+    left:-150px;
+    height:300px;
+    width:300px;
+    z-index:1000;
+    border-radius:300px;
+}
+
+.img-container {
+    width:60px;
+    height:60px;
+    border-radius:60px;
+    overflow:hidden;
+}
+.img-container img {
+    position:absolute;
+    border-radius:60px;
+    overflow:hidden;
+    width:60px;
+    height:60px;
+}
