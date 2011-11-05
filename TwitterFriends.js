@@ -16,7 +16,7 @@ var map = (function(){
 /*
  * Base Constructor for the TwitterFriends Object
  * Currently depends on jQuery and Underscore for initial convenience
- * I hope to remove jQuery at least
+ * Depends on jQuery for AJAX compatibility, and Underscore for _.isEqual
  *
  */
 var TwitterFriends = function(sn){    
@@ -51,6 +51,7 @@ TwitterFriends.prototype.getTwitterFriendIds = function(sn){
  */
 TwitterFriends.prototype.receiveFollowerIds = function(data){
     var chunkedFriends = [], tmpArr = [];
+    $('.followers').show().html($('.sn-input').val()+' is following '+data.ids.length+' people.');
     for(var i = 0, l = data.ids.length; i < l; i++){
         tmpArr.push(data.ids[i]);
         if(tmpArr.length === 100){
@@ -173,6 +174,8 @@ TwitterFriends.prototype.handleLocations = function(LatLng, person){
     var uniqueLocation = true,
         markup, 
         marker;
+    var followsLeft = (this.calledLocations - (this.receivedLocations+1));
+    $('.followers-received').show().html('Waiting for information for '+followsLeft+' more people.');
     var callVsRecv = (this.calledLocations == (this.receivedLocations+1));
     //check if the location isEqual to any of the same in this.locations
     for(var i = 0, l = this.locations.length; i < l; i++){
@@ -213,7 +216,6 @@ var circlePoints = function(radius, steps, centerX, centerY){
         
         points.push([tmpX, tmpY]);
     }
-    console.log(points);
     return points;
 };
 
@@ -221,7 +223,7 @@ TwitterFriends.prototype.groupByLocation = function(){
     var LatLng, markup, person, points, top, left;
     console.log('I made it');
     for(var i = 0, l = this.locations.length; i < l; i++){
-        markup = '<div class="group-marker">';
+        markup = '<div class="group-marker">'+ '<div class="group-amount">'+this.locations[i].followers.length+'</div>';
         LatLng = this.locations[i].latLng;
         for(var j = 0, k = this.locations[i].followers.length; j < k; j++){
             person = this.locations[i].followers[j];
@@ -243,7 +245,6 @@ TwitterFriends.prototype.groupByLocation = function(){
             shadow: '',
             content: markup
         });
-        console.dir(marker);
     }
 };
 
