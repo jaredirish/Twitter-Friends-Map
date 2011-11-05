@@ -15,3 +15,8 @@
     border:1px solid #999;
     background:#BADA55;
 }
+.marker {
+    width:30px;
+    height:30px;
+    background:red;
+}
