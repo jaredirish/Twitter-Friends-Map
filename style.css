@@ -1,0 +1,17 @@
+.sn-input{
+    position:absolute;
+    top:50%;
+    left:30%;
+    width:300px;
+    height:30px;
+    border:1px solid #999;
+    z-index:999;
+}
+.sn-button {
+    position:absolute;
+    top:50%;
+    left:60%;
+    height:30px;
+    border:1px solid #999;
+    background:#BADA55;
+}
