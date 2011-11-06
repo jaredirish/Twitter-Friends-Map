@@ -146,7 +146,7 @@ TwitterFriends.prototype.callGeoCoder = function(location, index){
         //remove whitespace and replace with plusses
         location = location.replace(/\s/g, '+');
         var url = 'http://where.yahooapis.com/geocode?location='+location+'&flags=J&appid=dj0yJmk9WGUydmhyQ0RtekIxJmQ9WVdrOWRVVlpaMmhvTkdjbWNHbzlNVFUyTnpNeU5ERTJNZy0tJnM9Y29uc3VtZXJzZWNyZXQmeD01ZA--&callback=receiveGeoCall';
-        this.callGetJson(url, index);
+        this.callGetJson(url, location, index);
     }
 };
 
@@ -155,25 +155,80 @@ TwitterFriends.prototype.callGeoCoder = function(location, index){
  * callback sends the Latatitude and Longitude to handleLocations
  * 
  */
-TwitterFriends.prototype.callGetJson = function(url, index){
+TwitterFriends.prototype.callGetJson = function(url, location, index){
     this.calledLocations++;
     var that = this;
-    $.getJSON(url, function(data){
-        that.receivedLocations++;
-        var i = index;
-        var result;
-        //check if there are results, otherwise we get errors
-        if(data.ResultSet.Found >= 1){
-            result = data.ResultSet.Results[0];
-        } else {
-            return;    
+    $.ajax({
+        url: url, 
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log("error " + textStatus + " errorThrown" + errorThrown);
+            console.log("incoming Text " + jqXHR.responseText);
+        },
+        success: function(data){
+            that.receivedLocations++;
+            console.log(that.receivedLocations);
+            var i = index;
+            var result;
+            //check if there are results, otherwise we get errors
+            if(!data.ResultSet){
+                //how the hell are we getting cross-domain xml from Yahoo!?
+                data = that.xmlToJson(data);
+            }
+            if(data.ResultSet.Found >= 1){
+                result = data.ResultSet.Results[0];
+            } else {
+                return;    
+            }
+            
+            var person = that.follows[i];
+            var LatLng = new google.maps.LatLng(result.latitude, result.longitude);
+            //handle the location information for each person
+            that.handleLocations(LatLng, person);
         }
-        
-        var person = that.follows[i];
-        var LatLng = new google.maps.LatLng(result.latitude, result.longitude);
-        //handle the location information for each person
-        that.handleLocations(LatLng, person);
     });
+};
+
+/*
+ * Implemented this xmlToJson function, just copy-pasted
+ * from David Walsh's blog, this is used to fix Yahoo! sending
+ * cross-domain XML, how is that even possible?!
+ *
+ */
+TwitterFriends.prototype.xmlToJson = function(xml){
+  // Create the return object
+  var obj = {};
+
+  if (xml.nodeType == 1) { // element
+    // do attributes
+    if (xml.attributes.length > 0) {
+    obj["@attributes"] = {};
+      for (var j = 0; j < xml.attributes.length; j++) {
+        var attribute = xml.attributes.item(j);
+        obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
+      }
+    }
+  } else if (xml.nodeType == 3) { // text
+    obj = xml.nodeValue;
+  }
+
+  // do children
+  if (xml.hasChildNodes()) {
+    for(var i = 0; i < xml.childNodes.length; i++) {
+      var item = xml.childNodes.item(i);
+      var nodeName = item.nodeName;
+      if (typeof(obj[nodeName]) == "undefined") {
+        obj[nodeName] = this.xmlToJson(item);
+      } else {
+        if (typeof(obj[nodeName].length) == "undefined") {
+          var old = obj[nodeName];
+          obj[nodeName] = [];
+          obj[nodeName].push(old);
+        }
+        obj[nodeName].push(this.xmlToJson(item));
+      }
+    }
+  }
+  return obj;
 };
 
 TwitterFriends.prototype.refreshLatLng = function(){
@@ -229,10 +284,15 @@ TwitterFriends.prototype.handleLocations = function(LatLng, person){
 TwitterFriends.prototype.circlePoints = function(radius, steps, centerX, centerY){
     var xValues = [], yValues = [], points = [], tmpX, tmpY;
     for (var i = 0; i < steps; i++) {
+        
         xValues[i] = (centerX + radius * Math.cos(2 * Math.PI * i / steps));
+        
         tmpX = Math.floor(xValues[i]);
+        
         yValues[i] = (centerY + radius * Math.sin(2 * Math.PI * i / steps));
+        
         tmpY = Math.floor(yValues[i]);
+        
         points.push([tmpX, tmpY]);
     }
     return points;
