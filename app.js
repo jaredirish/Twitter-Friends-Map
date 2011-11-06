@@ -5,7 +5,7 @@ $(document).ready(function(){
             twitterFriends = new TwitterFriends(sn, true);
         } else {
             localStorage.setItem('sn', sn);
-            twitterFriends = new TwitterFriends(sn);    
+            twitterFriends = new TwitterFriends(sn, false);    
         }
         $('.sn-button').fadeOut();
         $('.sn-input').fadeOut();
