@@ -222,28 +222,36 @@ TwitterFriends.prototype.handleLocations = function(LatLng, person){
     callGroupBy(this);    
 };
 
+/*
+ * Utility function for returning circular points about a center
+ *
+ */
 TwitterFriends.prototype.circlePoints = function(radius, steps, centerX, centerY){
-    var xValues = [];
-    var yValues = [];
-    var points = [];
-    var tmpX;
-    var tmpY;
+    var xValues = [], yValues = [], points = [], tmpX, tmpY;
     for (var i = 0; i < steps; i++) {
         xValues[i] = (centerX + radius * Math.cos(2 * Math.PI * i / steps));
         tmpX = Math.floor(xValues[i]);
         yValues[i] = (centerY + radius * Math.sin(2 * Math.PI * i / steps));
         tmpY = Math.floor(yValues[i]);
-        
         points.push([tmpX, tmpY]);
     }
     return points;
 };
 
+
+/*
+ * Refactor this jumbled mess, possibly use Handlebars.js for templating
+ *
+ */
 TwitterFriends.prototype.groupByLocation = function(){
     var LatLng, markup, person, points, top, left;
     console.log('I made it');
     for(var i = 0, l = this.locations.length; i < l; i++){
-        markup = '<div class="group-marker">'+ '<div class="group-amount">'+this.locations[i].followers.length+'</div>';
+        var fol = this.locations[i].followers.length;
+        //let's be really anal about text positioning shall we
+        var width = Math.ceil(fol/10) * 7;
+        markup = '<div class="group-marker">'+ '<div class="group-amount" style="margin-left:-'+width+'px;">'+fol+'</div><div class="group-img-wrap">';
+        
         LatLng = this.locations[i].latLng;
         for(var j = 0, k = this.locations[i].followers.length; j < k; j++){
             person = this.locations[i].followers[j];
@@ -252,13 +260,13 @@ TwitterFriends.prototype.groupByLocation = function(){
                 left = 0;
                 markup = '<div class="single-marker">';
             } else {
-                points = this.circlePoints(120, k, 120, 120);
+                points = this.circlePoints(120, k, 0, 0);
                 top = points[j][0];
                 left = points[j][1];
             }
             markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;height:60px;width:60px;border-radius:60px;overflow:hidden;" class="img-container"><img src="'+person.profile_image_url+'"/></div>';
         }
-        markup += '</div>';
+        markup += '</div></div>';
         
         marker = new RichMarker({
             position: LatLng,
@@ -269,7 +277,7 @@ TwitterFriends.prototype.groupByLocation = function(){
     }
     var leftOvers = (this.calledLocations - this.receivedLocations);
     if(leftOvers){
-        $('.followers-received').show().html("We couldn't get "+ leftOvers +" sorry.");
+        $('.followers-received').show().html(leftOvers +" person(s) got lost and we can't find them.");
     }
     var followsString = JSON.stringify(this.follows);
     localStorage.setItem('follows', followsString);
