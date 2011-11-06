@@ -23,6 +23,7 @@ var TwitterFriends = function(sn, ls){
     this.follows = ls ? JSON.parse(localStorage.getItem('follows')) || [] : [];
     this.locations = ls ? JSON.parse(localStorage.getItem('locations')) || [] : [];
     this.calledLocations = 0;
+    this.markers = [];
     this.receivedLocations = 0;
     this.receivedCalls = 0;
     this.totalCalls = 0;
@@ -40,6 +41,7 @@ TwitterFriends.prototype.constructor = TwitterFriends;
  *
  */
 TwitterFriends.prototype.getTwitterFriendIds = function(sn){
+    //if we have data stored in localStorage use it
     if(this.follows.length){
         if(this.locations.length){
             this.refreshLatLng();
@@ -73,6 +75,11 @@ TwitterFriends.prototype.receiveFollowerIds = function(data){
     this.createUserCallString(chunkedFriends);
 };
 
+
+/*
+ * Set followers message to update the user on approximate time left
+ *
+ */
 TwitterFriends.prototype.setFollowersMessage = function(f){
     var n = f ? f : this.follows.length;
     $('.followers').show().html($('.sn-input').val()+' is following '+n+' people.');    
@@ -81,6 +88,7 @@ TwitterFriends.prototype.setFollowersMessage = function(f){
 /*
  * Assemble strings to make AJAX calls against the Twitter API
  * returns Twitter User data to the receiveCallStringResults callback
+ * Only work if we are not using LocalStorage
  * 
  */
 TwitterFriends.prototype.createUserCallString = function(users){
@@ -185,7 +193,7 @@ TwitterFriends.prototype.callGetJson = function(url, location, index){
             var person = that.follows[i];
             var LatLng = new google.maps.LatLng(result.latitude, result.longitude);
             //handle the location information for each person
-            that.handleLocations(LatLng, person);
+            that.handleMarkerGroups(LatLng, person);
         }
     });
 };
@@ -193,7 +201,7 @@ TwitterFriends.prototype.callGetJson = function(url, location, index){
 /*
  * Implemented this xmlToJson function, just copy-pasted
  * from David Walsh's blog, this is used to fix Yahoo! sending
- * cross-domain XML, how is that even possible?!
+ * XML even when I request JSON
  *
  */
 TwitterFriends.prototype.xmlToJson = function(xml){
@@ -233,48 +241,74 @@ TwitterFriends.prototype.xmlToJson = function(xml){
   return obj;
 };
 
+/*
+ * If we are using localStorage we lose inheritance of
+ * google maps objects. And they need to be recreated.
+ *
+ */
 TwitterFriends.prototype.refreshLatLng = function(){
+    var ll;
     for(var i = 0, l = this.locations.length; i < l; i++){
-        var ll = this.locations[i].latLng;
+        ll = this.locations[i].latLng;
         ll = new google.maps.LatLng(ll.Na, ll.Oa);
         this.locations[i].latLng = ll;
     }    
 };
 
-/*
- * Find all unique locations and if more than one user
- * belongs to a location attach the user to that location
- *
- */
-TwitterFriends.prototype.handleLocations = function(LatLng, person){
-    var uniqueLocation = true, followsLeft = this.followsLeft();
-    function callGroupBy(that){
-        clearTimeout(that.callTimeout);
-        if(!followsLeft){
-            localStorage.setItem('locations', JSON.stringify(that.locations));
-            that.groupByLocation();    
-        } else {
-            that.callTimeout = setTimeout(function(thisObject){thisObject.groupByLocation();}, 3000, that);    
-        }
-    }
+TwitterFriends.prototype.handleMarkerGroups = function(LatLng, person){
+    //each person has a unique location until we check that they don't
+    var uniqueLocation = true;
     
-    //check if the location isEqual to any of the same in this.locations
     for(var i = 0, l = this.locations.length; i < l; i++){
-        //if yes break the loop
+        //check if the location coming back is equal to any of the locations we have
         if(_.isEqual(LatLng, this.locations[i].latLng)){
+            //if the location is equal push the person into the existing object
             this.locations[i].followers.push(person);
-            callGroupBy(this);
-            return;    
+            //recalculate necessary markup and refresh the marker
+            this.resetMarkupAndRefresh(this.locations[i]);
+            return;
         }
     }
     
+    //create single person markup
+    var markup = '<div class="single-marker">';
+    markup += '<div style="height:60px;width:60px;border-radius:60px;overflow:hidden;" class="img-container"><img src="'+person.profile_image_url+'"/></div>';
+    markup += '</div>';
+    var marker = new RichMarker({
+            position: LatLng,
+            map: map,
+            shadow: '',
+            content: markup
+    });
+    this.markers.push(marker);
     var locationObject = {
         latLng : LatLng,
-        followers : [person]
+        followers : [person],
+        marker : marker
     };
-    
     this.locations.push(locationObject);
-    callGroupBy(this);    
+};
+
+/*
+ * Much cleaner way to dynamically add users to the map
+ *
+ */
+TwitterFriends.prototype.resetMarkupAndRefresh = function(locationObj){
+    var marker = locationObj.marker,
+        fol = locationObj.followers.length,
+        width = Math.ceil(fol/10) * 7,
+        points = this.circlePoints(120, fol, 0, 0),
+        top, left, person,
+        markup = '<div class="group-marker">'+ '<div class="group-amount" style="margin-left:-'+width+'px;">'+fol+'</div><div class="group-img-wrap">';
+    for(var i = 0, l = locationObj.followers.length; i < l; i++){
+        person = locationObj.followers[i];
+        top = points[i][0];
+        left = points[i][1];
+        markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;height:60px;width:60px;border-radius:60px;overflow:hidden;" class="img-container"><img src="'+person.profile_image_url+'"/></div>';
+    }
+    markup += '</div></div>';
+    marker.content = markup;
+    marker.setMap(map);
 };
 
 TwitterFriends.prototype.followsLeft = function(){
@@ -306,8 +340,12 @@ TwitterFriends.prototype.circlePoints = function(radius, steps, centerX, centerY
 };
 
 
+
+
 /*
  * Refactor this jumbled mess, possibly use Handlebars.js for templating
+ * This function works well if we have all the data, but we need to work
+ * dynamically and add users to groups when we get them.
  *
  */
 TwitterFriends.prototype.groupByLocation = function(){
@@ -341,10 +379,7 @@ TwitterFriends.prototype.groupByLocation = function(){
             shadow: '',
             content: markup
         });
-    }
-    var leftOvers = (this.calledLocations - this.receivedLocations);
-    if(leftOvers){
-        $('.followers-received').show().html(leftOvers +" person(s) got lost and we can't find them.");
+        this.markers.push(marker);
     }
     var followsString = JSON.stringify(this.follows);
     localStorage.setItem('follows', followsString);
