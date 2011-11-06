@@ -266,27 +266,40 @@ TwitterFriends.prototype.handleMarkerGroups = function(LatLng, person){
             this.locations[i].followers.push(person);
             //recalculate necessary markup and refresh the marker
             this.resetMarkupAndRefresh(this.locations[i]);
+            if(!this.followsLeft()) this.setLocationLocalStorage();
             return;
         }
     }
     
     //create single person markup
     var markup = '<div class="single-marker">';
-    markup += '<div style="height:60px;width:60px;border-radius:60px;overflow:hidden;" class="img-container"><img src="'+person.profile_image_url+'"/></div>';
+    markup += '<div class="img-container"><img src="'+person.profile_image_url+'"/></div>';
     markup += '</div>';
+    
     var marker = new RichMarker({
             position: LatLng,
             map: map,
             shadow: '',
             content: markup
     });
+    
     this.markers.push(marker);
+    
     var locationObject = {
         latLng : LatLng,
         followers : [person],
         marker : marker
     };
     this.locations.push(locationObject);
+    if(!this.followsLeft()) this.setLocationLocalStorage();
+};
+
+TwitterFriends.prototype.setLocationLocalStorage = function(){
+    console.log('setLocationLocalStorage');
+    for(var i = 0, l = this.locations.length; i < l; i++){
+        delete this.locations[i].marker;    
+    }
+    localStorage.setItem('locations', JSON.stringify(this.locations));
 };
 
 /*
@@ -304,7 +317,7 @@ TwitterFriends.prototype.resetMarkupAndRefresh = function(locationObj){
         person = locationObj.followers[i];
         top = points[i][0];
         left = points[i][1];
-        markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;height:60px;width:60px;border-radius:60px;overflow:hidden;" class="img-container"><img src="'+person.profile_image_url+'"/></div>';
+        markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;" class="img-container"><img src="'+person.profile_image_url+'"/></div>';
     }
     markup += '</div></div>';
     marker.content = markup;
@@ -381,13 +394,12 @@ TwitterFriends.prototype.groupByLocation = function(){
         });
         this.markers.push(marker);
     }
-    var followsString = JSON.stringify(this.follows);
-    localStorage.setItem('follows', followsString);
     this.cleanup();
 };
 
 TwitterFriends.prototype.cleanup = function(){
     this.setFollowersMessage();
-    this.followsLeft();    
+    this.followsLeft();
+    localStorage.setItem('follows', JSON.stringify(this.follows));
 };
 
