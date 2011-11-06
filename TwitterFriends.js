@@ -191,7 +191,7 @@ TwitterFriends.prototype.refreshLatLng = function(){
  */
 TwitterFriends.prototype.handleLocations = function(LatLng, person){
     var uniqueLocation = true;
-    var followsLeft = (this.calledLocations - (this.receivedLocations+1));
+    var followsLeft = (this.calledLocations - this.receivedLocations);
     $('.followers-received').show().html('Waiting for information for '+followsLeft+' more people.');
     function callGroupBy(that){
         clearTimeout(that.callTimeout);
@@ -267,9 +267,9 @@ TwitterFriends.prototype.groupByLocation = function(){
             content: markup
         });
     }
-    var leftOvers = this.calledLocations - this.receivedLocations;
-    if(!leftOvers){
-        $('.followers-received').html("We counldn't get "+ leftOvers +" sorry.");
+    var leftOvers = (this.calledLocations - this.receivedLocations);
+    if(leftOvers){
+        $('.followers-received').show().html("We couldn't get "+ leftOvers +" sorry.");
     }
     var followsString = JSON.stringify(this.follows);
     localStorage.setItem('follows', followsString);
