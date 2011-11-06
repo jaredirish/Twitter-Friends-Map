@@ -158,22 +158,21 @@ TwitterFriends.prototype.callGetJson = function(url, location, index){
     this.calledLocations++;
     var that = this;
     $.ajax({
-        url: url, 
+        url: url,
         error: function(jqXHR, textStatus, errorThrown) {
             console.log("error " + textStatus + " errorThrown" + errorThrown);
             console.log("incoming Text " + jqXHR.responseText);
         },
-        success: function(data){
+        success: function(response){
+            var i = index, result;
+            response = (typeof response == 'string') ? JSON.parse(response) : response;
             that.receivedLocations++;
-            var i = index;
-            var result;
-            //check if there are results, otherwise we get errors
-            if(!data.ResultSet){
-                //how the hell are we getting cross-domain xml from Yahoo!?
-                data = that.xmlToJson(data);
+            
+            if(!response.ResultSet){
+                response = that.xmlToJson(response);
             }
-            if(data.ResultSet.Found >= 1){
-                result = data.ResultSet.Results[0];
+            if(response.ResultSet.Found >= 1){
+                result = response.ResultSet.Results[0];
             } else {
                 return;    
             }
