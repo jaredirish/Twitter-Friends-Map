@@ -48,7 +48,8 @@ TwitterFriends.prototype.getTwitterFriendIds = function(sn){
             this.sendGeoCalls();   
         }    
     } else {
-        $.ajax({url:'https://api.twitter.com/1/friends/ids.json?cursor=-1&screen_name='+sn+'&callback=twitterFriends.receiveFollowerIds', dataType:'jsonp'});
+        var url = 'https://api.twitter.com/1/friends/ids.json?cursor=-1&screen_name='+sn+'&callback=twitterFriends.receiveFollowerIds';
+        $.ajax({url:url, dataType:'jsonp', statusCode: {400: function(){$('.twitter-alert').show();}}});
     }
 };
 
@@ -59,6 +60,7 @@ TwitterFriends.prototype.getTwitterFriendIds = function(sn){
  *
  */
 TwitterFriends.prototype.receiveFollowerIds = function(data){
+    console.log('callback', data);
     var chunkedFriends = [], tmpArr = [];
     $('.followers').show().html($('.sn-input').val()+' is following '+data.ids.length+' people.');
     for(var i = 0, l = data.ids.length; i < l; i++){
@@ -197,7 +199,7 @@ TwitterFriends.prototype.handleLocations = function(LatLng, person){
             localStorage.setItem('locations', JSON.stringify(that.locations));
             that.groupByLocation();    
         } else {
-            that.callTimeout = setTimeout(function(thisObject){thisObject.timeoutToGroupByLocation();}, 3000, that);    
+            that.callTimeout = setTimeout(function(thisObject){thisObject.groupByLocation();}, 3000, that);    
         }
     }
     
@@ -239,7 +241,6 @@ TwitterFriends.prototype.circlePoints = function(radius, steps, centerX, centerY
 
 TwitterFriends.prototype.groupByLocation = function(){
     var LatLng, markup, person, points, top, left;
-    console.log(this.locations.length);
     console.log('I made it');
     for(var i = 0, l = this.locations.length; i < l; i++){
         markup = '<div class="group-marker">'+ '<div class="group-amount">'+this.locations[i].followers.length+'</div>';

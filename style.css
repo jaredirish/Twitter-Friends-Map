@@ -79,6 +79,22 @@
     margin-left: -6px;
 }
 
+.twitter-alert {
+    position:fixed;
+    display:none;
+    padding:24px;
+    height:30px;
+    width:300px;
+    top: 50%;
+    left: 50%;
+    margin-top: -30px;
+    margin-left: -150px;
+    background:#BADA55;
+    border-radius:5px;
+    font-family:Helvetic Nueue, Arial, sans-serif;
+    border:1px solid #999;
+}
+
 .img-container {
     width:60px;
     height:60px;
