@@ -48,25 +48,48 @@
 .group-marker {
     position:relative;
     z-index:100;
-    top:0px;
-    left:0px;
+    top:0;
+    left:0;
     width:60px;
     height:60px;
     border-radius:60px;
     background:#fff;
     overflow:hidden;
-    box-shadow:2px;
+    -moz-box-shadow:inset 0 0 10px #000000;
+    -webkit-box-shadow:inset 0 0 10px #000000;
+    box-shadow:inset 0 0 10px #000000;
     -webkit-transition-property: height, width, top, left;
     -webkit-transition-duration: 0.3s;
+    -moz-transition-property: height, width, top, left;
+    -moz-transition-duration: 0.3s;
+    -o-transition-property: height, width, top, left;
+    -o-transition-duration: 0.3s;
 }
 
 .group-marker:hover {
-    top:-150px;
-    left:-150px;
+    top:-120px;
+    left:-120px;
     height:300px;
     width:300px;
     z-index:1000;
     border-radius:300px;
+}
+
+.group-img-wrap {
+    position:absolute;
+    top:0;
+    left:0;
+    -webkit-transition-property: top, left;
+    -webkit-transition-duration: 0.3s;
+    -moz-transition-property: top, left;
+    -moz-transition-duration: 0.3s;
+    -o-transition-property: top, left;
+    -o-transition-duration: 0.3s;
+}
+
+.group-marker:hover .group-img-wrap {
+    top:120px;
+    left:120px;
 }
 
 .group-amount {
@@ -75,7 +98,7 @@
     font-family:Helvetica Nueue, Arial, sans-serif;
     top: 50%;
     left: 50%;
-    margin-top: -12px;
+    margin-top: -14px;
     margin-left: -6px;
 }
 
