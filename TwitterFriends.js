@@ -61,7 +61,7 @@ TwitterFriends.prototype.getTwitterFriendIds = function(sn){
  */
 TwitterFriends.prototype.receiveFollowerIds = function(data){
     var chunkedFriends = [], tmpArr = [];
-    $('.followers').show().html($('.sn-input').val()+' is following '+data.ids.length+' people.');
+    this.setFollowersMessage(data.ids.length);
     for(var i = 0, l = data.ids.length; i < l; i++){
         tmpArr.push(data.ids[i]);
         if(tmpArr.length === 100){
@@ -71,6 +71,11 @@ TwitterFriends.prototype.receiveFollowerIds = function(data){
     }
     chunkedFriends.push(tmpArr);
     this.createUserCallString(chunkedFriends);
+};
+
+TwitterFriends.prototype.setFollowersMessage = function(f){
+    var n = f ? f : this.follows.length;
+    $('.followers').show().html($('.sn-input').val()+' is following '+n+' people.');    
 };
 
 /*
@@ -242,9 +247,7 @@ TwitterFriends.prototype.refreshLatLng = function(){
  *
  */
 TwitterFriends.prototype.handleLocations = function(LatLng, person){
-    var uniqueLocation = true;
-    var followsLeft = (this.calledLocations - this.receivedLocations);
-    $('.followers-received').show().html('Waiting for information for '+followsLeft+' more people.');
+    var uniqueLocation = true, followsLeft = this.followsLeft();
     function callGroupBy(that){
         clearTimeout(that.callTimeout);
         if(!followsLeft){
@@ -272,6 +275,13 @@ TwitterFriends.prototype.handleLocations = function(LatLng, person){
     
     this.locations.push(locationObject);
     callGroupBy(this);    
+};
+
+TwitterFriends.prototype.followsLeft = function(){
+    var followsLeft = (this.calledLocations - this.receivedLocations);
+    var text = followsLeft ? 'Waiting for information for '+followsLeft+' more people.' : 'Check out your people';
+    $('.followers-received').show().html(text);
+    return followsLeft;
 };
 
 /*
@@ -338,5 +348,11 @@ TwitterFriends.prototype.groupByLocation = function(){
     }
     var followsString = JSON.stringify(this.follows);
     localStorage.setItem('follows', followsString);
+    this.cleanup();
+};
+
+TwitterFriends.prototype.cleanup = function(){
+    this.setFollowersMessage();
+    this.followsLeft();    
 };
 
