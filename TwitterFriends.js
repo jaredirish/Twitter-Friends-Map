@@ -19,16 +19,16 @@ var map = (function(){
  * Depends on jQuery for AJAX compatibility, and Underscore for _.isEqual
  *
  */
-var TwitterFriends = function(sn){    
-    this.getTwitterFriendIds(sn);
-    this.follows = [];
-    this.markers = [];
-    this.locations = [];
+var TwitterFriends = function(sn, ls){    
+    this.follows = ls ? JSON.parse(localStorage.getItem('follows')) || [] : [];
+    this.locations = ls ? JSON.parse(localStorage.getItem('locations')) || [] : [];
     this.calledLocations = 0;
     this.receivedLocations = 0;
     this.receivedCalls = 0;
     this.totalCalls = 0;
     this.map = map;
+    this.callTimeout = 0;
+    this.getTwitterFriendIds(sn);
 };
 
 TwitterFriends.prototype.constructor = TwitterFriends;
@@ -40,7 +40,17 @@ TwitterFriends.prototype.constructor = TwitterFriends;
  *
  */
 TwitterFriends.prototype.getTwitterFriendIds = function(sn){
-    $.ajax({url:'https://api.twitter.com/1/friends/ids.json?cursor=-1&screen_name='+sn+'&callback=twitterFriends.receiveFollowerIds', dataType:'jsonp'});
+    if(this.follows.length){
+        if(this.locations.length){
+            this.refreshLatLng();
+            this.groupByLocation();
+        } else {
+            this.sendGeoCalls();   
+        }    
+    } else {
+        var url = 'https://api.twitter.com/1/friends/ids.json?cursor=-1&screen_name='+sn+'&callback=twitterFriends.receiveFollowerIds';
+        $.ajax({url:url, dataType:'jsonp', statusCode: {400: function(){$('.twitter-alert').show();}}});
+    }
 };
 
 /*
@@ -50,6 +60,7 @@ TwitterFriends.prototype.getTwitterFriendIds = function(sn){
  *
  */
 TwitterFriends.prototype.receiveFollowerIds = function(data){
+    console.log('callback', data);
     var chunkedFriends = [], tmpArr = [];
     $('.followers').show().html($('.sn-input').val()+' is following '+data.ids.length+' people.');
     for(var i = 0, l = data.ids.length; i < l; i++){
@@ -165,26 +176,39 @@ TwitterFriends.prototype.callGetJson = function(url, index){
     });
 };
 
+TwitterFriends.prototype.refreshLatLng = function(){
+    for(var i = 0, l = this.locations.length; i < l; i++){
+        var ll = this.locations[i].latLng;
+        ll = new google.maps.LatLng(ll.Na, ll.Oa);
+        this.locations[i].latLng = ll;
+    }    
+};
+
 /*
  * Find all unique locations and if more than one user
  * belongs to a location attach the user to that location
  *
  */
 TwitterFriends.prototype.handleLocations = function(LatLng, person){
-    var uniqueLocation = true,
-        markup, 
-        marker;
+    var uniqueLocation = true;
     var followsLeft = (this.calledLocations - (this.receivedLocations+1));
     $('.followers-received').show().html('Waiting for information for '+followsLeft+' more people.');
-    var callVsRecv = (this.calledLocations == (this.receivedLocations+1));
+    function callGroupBy(that){
+        clearTimeout(that.callTimeout);
+        if(!followsLeft){
+            localStorage.setItem('locations', JSON.stringify(that.locations));
+            that.groupByLocation();    
+        } else {
+            that.callTimeout = setTimeout(function(thisObject){thisObject.groupByLocation();}, 3000, that);    
+        }
+    }
+    
     //check if the location isEqual to any of the same in this.locations
     for(var i = 0, l = this.locations.length; i < l; i++){
         //if yes break the loop
         if(_.isEqual(LatLng, this.locations[i].latLng)){
             this.locations[i].followers.push(person);
-            if(callVsRecv){
-                this.groupByLocation();    
-            }
+            callGroupBy(this);
             return;    
         }
     }
@@ -195,14 +219,10 @@ TwitterFriends.prototype.handleLocations = function(LatLng, person){
     };
     
     this.locations.push(locationObject);
-    
-    //@TODO Missing one location, figure this out
-    if(callVsRecv){
-        this.groupByLocation();    
-    }
+    callGroupBy(this);    
 };
 
-var circlePoints = function(radius, steps, centerX, centerY){
+TwitterFriends.prototype.circlePoints = function(radius, steps, centerX, centerY){
     var xValues = [];
     var yValues = [];
     var points = [];
@@ -232,13 +252,14 @@ TwitterFriends.prototype.groupByLocation = function(){
                 left = 0;
                 markup = '<div class="single-marker">';
             } else {
-                points = circlePoints(120, k, 120, 120);
+                points = this.circlePoints(120, k, 120, 120);
                 top = points[j][0];
                 left = points[j][1];
             }
             markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;height:60px;width:60px;border-radius:60px;overflow:hidden;" class="img-container"><img src="'+person.profile_image_url+'"/></div>';
         }
         markup += '</div>';
+        
         marker = new RichMarker({
             position: LatLng,
             map: map,
@@ -246,5 +267,11 @@ TwitterFriends.prototype.groupByLocation = function(){
             content: markup
         });
     }
+    var leftOvers = this.calledLocations - this.receivedLocations;
+    if(!leftOvers){
+        $('.followers-received').html("We counldn't get "+ leftOvers +" sorry.");
+    }
+    var followsString = JSON.stringify(this.follows);
+    localStorage.setItem('follows', followsString);
 };
 
