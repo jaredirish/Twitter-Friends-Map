@@ -60,7 +60,6 @@ TwitterFriends.prototype.getTwitterFriendIds = function(sn){
  *
  */
 TwitterFriends.prototype.receiveFollowerIds = function(data){
-    console.log('callback', data);
     var chunkedFriends = [], tmpArr = [];
     $('.followers').show().html($('.sn-input').val()+' is following '+data.ids.length+' people.');
     for(var i = 0, l = data.ids.length; i < l; i++){
@@ -166,7 +165,6 @@ TwitterFriends.prototype.callGetJson = function(url, location, index){
         },
         success: function(data){
             that.receivedLocations++;
-            console.log(that.receivedLocations);
             var i = index;
             var result;
             //check if there are results, otherwise we get errors
