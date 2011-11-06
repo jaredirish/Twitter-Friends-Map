@@ -47,6 +47,7 @@
 
 .group-marker {
     position:relative;
+    z-index:100;
     top:0px;
     left:0px;
     width:60px;
@@ -54,6 +55,7 @@
     border-radius:60px;
     background:#fff;
     overflow:hidden;
+    box-shadow:2px;
     -webkit-transition-property: height, width, top, left;
     -webkit-transition-duration: 0.3s;
 }
@@ -71,8 +73,10 @@
     position:absolute;
     font-size:24px;
     font-family:Helvetica Nueue, Arial, sans-serif;
-    left:25%;
-    top:25%;
+    top: 50%;
+    left: 50%;
+    margin-top: -12px;
+    margin-left: -6px;
 }
 
 .img-container {
