@@ -317,7 +317,8 @@ TwitterFriends.prototype.resetMarkupAndRefresh = function(locationObj){
         person = locationObj.followers[i];
         top = points[i][0];
         left = points[i][1];
-        markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;" class="img-container"><img src="'+person.profile_image_url+'"/></div>';
+        markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;"' +
+        'class="img-container"<img src="'+person.profile_image_url+'"/><div class="follower-info">'+person.screen_name+', '+person.location+'</div></div>';
     }
     markup += '</div></div>';
     marker.content = markup;
@@ -382,7 +383,7 @@ TwitterFriends.prototype.groupByLocation = function(){
                 top = points[j][0];
                 left = points[j][1];
             }
-            markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;height:60px;width:60px;border-radius:60px;overflow:hidden;" class="img-container"><img src="'+person.profile_image_url+'"/></div>';
+            markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;" class="img-container"><img src="'+person.profile_image_url+'"/><div class="follower-info"><div class="follower-info-inner"><a href="http://twitter.com/#!/'+person.screen_name+'" target="_blank"><s>@</s><b>'+person.screen_name+'</b></a>, '+person.location+'</div></div></div>';
         }
         markup += '</div></div>';
         
