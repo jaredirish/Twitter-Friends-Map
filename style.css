@@ -7,6 +7,21 @@
     border:1px solid #999;
     z-index:999;
 }
+
+a {
+    color:#045885;
+    text-decoration:none;
+    font-family:Helvetica Nueue, Arial, sans-serif;
+}
+
+a:hover > b {
+    text-decoration:underline;    
+}
+
+s, b {
+    text-decoration:none;
+}
+
 .sn-button {
     position:absolute;
     top:50%;
@@ -73,6 +88,15 @@
     width:300px;
     z-index:1000;
     border-radius:300px;
+    overflow:visible;
+}
+.group-marker .img-container {
+    opacity:0;    
+    -webkit-transition: opacity 0.3s cubic-bezier(1,.1,1,1);
+}
+
+.group-marker:hover .img-container {
+    opacity:1;
 }
 
 .group-img-wrap {
@@ -126,8 +150,52 @@
 }
 .img-container img {
     position:absolute;
+    float:left;
     border-radius:60px;
     overflow:hidden;
     width:60px;
     height:60px;
+}
+
+.img-container:hover {
+    z-index:1000;
+    width:auto;
+    height:auto;
+    overflow:visible;    
+}
+.img-container:hover img {
+    z-index:1000;
+    border-radius:5px;
+}
+
+@-webkit-keyframes opac {
+    0%   { opacity: 0; }
+    80%  { opacity: 0.3; }
+    100% { opacity: 1; }  
+}
+
+.img-container:hover .follower-info {
+    z-index:900;
+    padding:8px 3px 3px 0px;
+    margin:-3px 0 0 -3px;
+    border-radius:5px;
+    background:#fff;
+    border:1px solid #999;
+}
+
+.follower-info-inner {
+    padding:8px 3px 3px 68px;
+}
+
+.follower-info {
+    max-width:300px;
+    min-width:250px;
+    min-height:55px;
+    overflow:hidden;
+    -webkit-transition-property: height, width;
+    -webkit-transition-duration: 0.3s;
+    -moz-transition-property: height, width;
+    -moz-transition-duration: 0.3s;
+    -o-transition-property: height, width;
+    -o-transition-duration: 0.3s;
 }
