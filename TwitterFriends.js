@@ -282,7 +282,6 @@ TwitterFriends.prototype.resetMarkupAndRefresh = function(locationObj){
         person = locationObj.followers[i];
         top = points[i][0];
         left = points[i][1];
-        console.log(person, person.profile_image_url);
         markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;"' +
         ' class="img-container"><img src="'+person.profile_image_url+'"/><div class="follower-info"><div class="follower-info-inner"><a href="http://twitter.com/#!/'+person.screen_name+'" target="_blank"><s>@</s><b>'+person.screen_name+'</b></a>, '+person.location+'</div></div></div>';
     }
