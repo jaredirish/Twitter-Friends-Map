@@ -19,9 +19,9 @@ var map = (function(){
  * Depends on jQuery for AJAX compatibility, and Underscore for _.isEqual
  *
  */
-var TwitterFriends = function(sn, ls){    
-    this.follows = ls ? JSON.parse(localStorage.getItem('follows')) || [] : [];
-    this.locations = ls ? JSON.parse(localStorage.getItem('locations')) || [] : [];
+var TwitterFriends = function(sn){    
+    this.follows = [];
+    this.locations = [];
     this.calledLocations = 0;
     this.markers = [];
     this.receivedLocations = 0;
@@ -41,18 +41,8 @@ TwitterFriends.prototype.constructor = TwitterFriends;
  *
  */
 TwitterFriends.prototype.getTwitterFriendIds = function(sn){
-    //if we have data stored in localStorage use it
-    if(this.follows.length){
-        if(this.locations.length){
-            this.refreshLatLng();
-            this.groupByLocation();
-        } else {
-            this.sendGeoCalls();   
-        }    
-    } else {
-        var url = 'https://api.twitter.com/1/friends/ids.json?cursor=-1&screen_name='+sn+'&callback=twitterFriends.receiveFollowerIds';
-        $.ajax({url:url, dataType:'jsonp', statusCode: {400: function(){$('.twitter-alert').show();}}});
-    }
+    var url = 'https://api.twitter.com/1/friends/ids.json?cursor=-1&screen_name='+sn+'&callback=twitterFriends.receiveFollowerIds';
+    $.ajax({url:url, dataType:'jsonp', statusCode: {400: function(){$('.twitter-alert').show();}}});
 };
 
 /*
@@ -88,7 +78,6 @@ TwitterFriends.prototype.setFollowersMessage = function(f){
 /*
  * Assemble strings to make AJAX calls against the Twitter API
  * returns Twitter User data to the receiveCallStringResults callback
- * Only work if we are not using LocalStorage
  * 
  */
 TwitterFriends.prototype.createUserCallString = function(users){
@@ -241,20 +230,6 @@ TwitterFriends.prototype.xmlToJson = function(xml){
   return obj;
 };
 
-/*
- * If we are using localStorage we lose inheritance of
- * google maps objects. And they need to be recreated.
- *
- */
-TwitterFriends.prototype.refreshLatLng = function(){
-    var ll;
-    for(var i = 0, l = this.locations.length; i < l; i++){
-        ll = this.locations[i].latLng;
-        ll = new google.maps.LatLng(ll.Na, ll.Oa);
-        this.locations[i].latLng = ll;
-    }    
-};
-
 TwitterFriends.prototype.handleMarkerGroups = function(LatLng, person){
     //each person has a unique location until we check that they don't
     var uniqueLocation = true;
@@ -266,14 +241,13 @@ TwitterFriends.prototype.handleMarkerGroups = function(LatLng, person){
             this.locations[i].followers.push(person);
             //recalculate necessary markup and refresh the marker
             this.resetMarkupAndRefresh(this.locations[i]);
-            if(!this.followsLeft()) this.setLocationLocalStorage();
             return;
         }
     }
     
     //create single person markup
     var markup = '<div class="single-marker">';
-    markup += '<div class="img-container"><img src="'+person.profile_image_url+'"/></div>';
+    markup += '<div class="img-container"><img src="'+person.profile_image_url+'"/><div class="follower-info"><div class="follower-info-inner"><a href="http://twitter.com/#!/'+person.screen_name+'" target="_blank"><s>@</s><b>'+person.screen_name+'</b></a>, '+person.location+'</div></div></div>';
     markup += '</div>';
     
     var marker = new RichMarker({
@@ -291,15 +265,6 @@ TwitterFriends.prototype.handleMarkerGroups = function(LatLng, person){
         marker : marker
     };
     this.locations.push(locationObject);
-    if(!this.followsLeft()) this.setLocationLocalStorage();
-};
-
-TwitterFriends.prototype.setLocationLocalStorage = function(){
-    console.log('setLocationLocalStorage');
-    for(var i = 0, l = this.locations.length; i < l; i++){
-        delete this.locations[i].marker;    
-    }
-    localStorage.setItem('locations', JSON.stringify(this.locations));
 };
 
 /*
@@ -317,8 +282,9 @@ TwitterFriends.prototype.resetMarkupAndRefresh = function(locationObj){
         person = locationObj.followers[i];
         top = points[i][0];
         left = points[i][1];
+        console.log(person, person.profile_image_url);
         markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;"' +
-        'class="img-container"<img src="'+person.profile_image_url+'"/><div class="follower-info">'+person.screen_name+', '+person.location+'</div></div>';
+        ' class="img-container"><img src="'+person.profile_image_url+'"/><div class="follower-info"><div class="follower-info-inner"><a href="http://twitter.com/#!/'+person.screen_name+'" target="_blank"><s>@</s><b>'+person.screen_name+'</b></a>, '+person.location+'</div></div></div>';
     }
     markup += '</div></div>';
     marker.content = markup;
@@ -401,6 +367,5 @@ TwitterFriends.prototype.groupByLocation = function(){
 TwitterFriends.prototype.cleanup = function(){
     this.setFollowersMessage();
     this.followsLeft();
-    localStorage.setItem('follows', JSON.stringify(this.follows));
 };
 
