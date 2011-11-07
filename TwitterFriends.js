@@ -274,7 +274,7 @@ TwitterFriends.prototype.handleMarkerGroups = function(LatLng, person){
 TwitterFriends.prototype.resetMarkupAndRefresh = function(locationObj){
     var marker = locationObj.marker,
         fol = locationObj.followers.length,
-        width = Math.ceil(fol/10) * 7,
+        width = fol.toString().length * 7,
         points = this.circlePoints(120, fol, 0, 0),
         top, left, person,
         markup = '<div class="group-marker">'+ '<div class="group-amount" style="margin-left:-'+width+'px;">'+fol+'</div><div class="group-img-wrap">';
