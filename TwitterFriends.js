@@ -19,7 +19,8 @@ var map = (function(){
  * Depends on jQuery for AJAX compatibility, and Underscore for _.isEqual
  *
  */
-var TwitterFriends = function(sn){    
+var TwitterFriends = function(sn){
+    this.screenName = sn;
     this.follows = [];
     this.locations = [];
     this.calledLocations = 0;
@@ -42,7 +43,16 @@ TwitterFriends.prototype.constructor = TwitterFriends;
  */
 TwitterFriends.prototype.getTwitterFriendIds = function(sn){
     var url = 'https://api.twitter.com/1/friends/ids.json?cursor=-1&screen_name='+sn+'&callback=twitterFriends.receiveFollowerIds';
-    $.ajax({url:url, dataType:'jsonp', statusCode: {400: function(){$('.twitter-alert').show();}}});
+    $.ajax({
+        url:url, 
+        dataType:'jsonp',
+        error: function(jqXHR, textStatus, errorThrown){
+            if(textStatus == 'timeout'){
+                $('.twitter-alert').show();
+            }
+        },
+        timeout:3000
+    });
 };
 
 /*
@@ -72,7 +82,7 @@ TwitterFriends.prototype.receiveFollowerIds = function(data){
  */
 TwitterFriends.prototype.setFollowersMessage = function(f){
     var n = f ? f : this.follows.length;
-    $('.followers').show().html($('.sn-input').val()+' is following '+n+' people.');    
+    $('.followers').show().html('following '+n+' people.');    
 };
 
 /*
@@ -247,7 +257,7 @@ TwitterFriends.prototype.handleMarkerGroups = function(LatLng, person){
     
     //create single person markup
     var markup = '<div class="single-marker">';
-    markup += '<div class="img-container"><img src="'+person.profile_image_url+'"/><div class="follower-info"><div class="follower-info-inner"><a href="http://twitter.com/#!/'+person.screen_name+'" target="_blank"><s>@</s><b>'+person.screen_name+'</b></a>, '+person.location+'</div></div></div>';
+    markup += '<div class="img-container"><img src="'+person.profile_image_url+'" alt="'+person.screen_name+'" /></div>';
     markup += '</div>';
     
     var marker = new RichMarker({
@@ -275,25 +285,32 @@ TwitterFriends.prototype.resetMarkupAndRefresh = function(locationObj){
     var marker = locationObj.marker,
         fol = locationObj.followers.length,
         width = fol.toString().length * 7,
-        points = this.circlePoints(120, fol, 0, 0),
+        points = this.circlePoints(125, fol, 8, 8),
         top, left, person,
         markup = '<div class="group-marker">'+ '<div class="group-amount" style="margin-left:-'+width+'px;">'+fol+'</div><div class="group-img-wrap">';
     for(var i = 0, l = locationObj.followers.length; i < l; i++){
         person = locationObj.followers[i];
         top = points[i][0];
         left = points[i][1];
-        markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;"' +
-        ' class="img-container"><img src="'+person.profile_image_url+'"/><div class="follower-info"><div class="follower-info-inner"><a href="http://twitter.com/#!/'+person.screen_name+'" target="_blank"><s>@</s><b>'+person.screen_name+'</b></a>, '+person.location+'</div></div></div>';
+        markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;" class="img-container"><img src="'+person.profile_image_url+'" alt="'+person.screen_name+'" /></div>';
     }
     markup += '</div></div>';
     marker.content = markup;
     marker.setMap(map);
+    //pyramid of DOOOOM
+    if(!this.followsLeft()){
+        twttr.anywhere(function (T) {
+            T('.img-container').hovercards({
+                username: function(node) {
+                    return node.alt;
+                }
+            });
+        });    
+    }
 };
 
 TwitterFriends.prototype.followsLeft = function(){
     var followsLeft = (this.calledLocations - this.receivedLocations);
-    var text = followsLeft ? 'Waiting for information for '+followsLeft+' more people.' : 'Check out your people';
-    $('.followers-received').show().html(text);
     return followsLeft;
 };
 
@@ -318,50 +335,6 @@ TwitterFriends.prototype.circlePoints = function(radius, steps, centerX, centerY
     return points;
 };
 
-
-
-
-/*
- * Refactor this jumbled mess, possibly use Handlebars.js for templating
- * This function works well if we have all the data, but we need to work
- * dynamically and add users to groups when we get them.
- *
- */
-TwitterFriends.prototype.groupByLocation = function(){
-    var LatLng, markup, person, points, top, left;
-    console.log('I made it');
-    for(var i = 0, l = this.locations.length; i < l; i++){
-        var fol = this.locations[i].followers.length;
-        //let's be really anal about text positioning shall we
-        var width = Math.ceil(fol/10) * 7;
-        markup = '<div class="group-marker">'+ '<div class="group-amount" style="margin-left:-'+width+'px;">'+fol+'</div><div class="group-img-wrap">';
-        
-        LatLng = this.locations[i].latLng;
-        for(var j = 0, k = this.locations[i].followers.length; j < k; j++){
-            person = this.locations[i].followers[j];
-            if(j === 0 && k == 1){
-                top = 0;
-                left = 0;
-                markup = '<div class="single-marker">';
-            } else {
-                points = this.circlePoints(120, k, 0, 0);
-                top = points[j][0];
-                left = points[j][1];
-            }
-            markup += '<div style="position:absolute;top:'+top+'px;left:'+left+'px;" class="img-container"><img src="'+person.profile_image_url+'"/><div class="follower-info"><div class="follower-info-inner"><a href="http://twitter.com/#!/'+person.screen_name+'" target="_blank"><s>@</s><b>'+person.screen_name+'</b></a>, '+person.location+'</div></div></div>';
-        }
-        markup += '</div></div>';
-        
-        marker = new RichMarker({
-            position: LatLng,
-            map: map,
-            shadow: '',
-            content: markup
-        });
-        this.markers.push(marker);
-    }
-    this.cleanup();
-};
 
 TwitterFriends.prototype.cleanup = function(){
     this.setFollowersMessage();

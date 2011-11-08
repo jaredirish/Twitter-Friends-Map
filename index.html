@@ -3,6 +3,7 @@
     <!-- I hope you'll ask for a date before you just checkout my source -->
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
     <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?v=3&sensor=false"></script>
+    <script src="http://platform.twitter.com/anywhere.js?id=OqrtjX10HDPHN4k5OtyAXQ&v=1" type="text/javascript"></script>
     <script type="text/javascript" src="Richmarker.js"></script>
     <script type="text/javascript" src="handlebars.js"></script>
     <link href="style.css" type="text/css" rel="stylesheet" />
@@ -23,10 +24,8 @@
 <html>
 <body>
     <div id="map_canvas"></div>
-    <input type="text" class="sn-input" placeholder="Enter Twitter handle without @ symbol" /><button class="sn-button">Map my friends</button>
-    <div class="followers"></div>
-    <div class="followers-received"></div>
-    <div class="twitter-alert">Twitter is busted, they won't give us info</div>
+    <div class="twitter-login"></div>
+    <div class="twitter-alert">We hit our Twitter API limit</div>
 	<script type="text/javascript" src="TwitterFriends.js"></script>
     <script type="text/javascript" src="Underscore.js"></script>
     <script type="text/javascript" src="app.js"></script>
