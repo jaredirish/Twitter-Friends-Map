@@ -307,9 +307,11 @@ TwitterFriends.prototype.resetMarkupAndRefresh = function(locationObj){
     marker.setMap(map);
     //pyramid of DOOOOM
     if(!this.followsLeft()){
+        console.log('zer0');
         twttr.anywhere(function (T) {
             T('.img-container').hovercards({
                 username: function(node) {
+                    console.log(node.alt);
                     return node.alt;
                 }
             });
