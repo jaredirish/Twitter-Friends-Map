@@ -109,6 +109,8 @@ s, b {
 .group-marker .img-container {
     opacity:0;    
     -webkit-transition: opacity 0.3s cubic-bezier(1,.1,1,1);
+    -moz-transition: opacity 0.3s cubic-bezier(1,.1,1,1);
+    -o-transition: opacity 0.3s cubic-bezier(1,.1,1,1);
 }
 
 .group-marker:hover .img-container {
@@ -209,6 +211,12 @@ s, b {
 }
 
 @-webkit-keyframes opac {
+    0%   { opacity: 0; }
+    80%  { opacity: 0.3; }
+    100% { opacity: 1; }  
+}
+
+@-moz-keyframes opac {
     0%   { opacity: 0; }
     80%  { opacity: 0.3; }
     100% { opacity: 1; }  

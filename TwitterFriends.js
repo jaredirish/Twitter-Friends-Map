@@ -285,10 +285,18 @@ TwitterFriends.prototype.resetMarkupAndRefresh = function(locationObj){
     var marker = locationObj.marker,
         fol = locationObj.followers.length,
         width = fol.toString().length * 7,
-        points = this.circlePoints(125, fol, 8, 8),
-        top, left, person,
+        tierCutOff = 15,
+        top, left, person, j,
         markup = '<div class="group-marker">'+ '<div class="group-amount" style="margin-left:-'+width+'px;">'+fol+'</div><div class="group-img-wrap">';
+        if(fol < tierCutOff){ 
+            points = this.circlePoints(80, fol, 8, 8);
+        } else {
+            points = this.circlePoints(80, 15, 8, 8);
+        }
     for(var i = 0, l = locationObj.followers.length; i < l; i++){
+        if(i >= 15){
+             points = this.circlePoints(125, fol, 8, 8);
+        }
         person = locationObj.followers[i];
         top = points[i][0];
         left = points[i][1];
